@@ -2,5 +2,4 @@
 REMOTE_ZABBIX_URL = "https://127.0.0.1/"
 REMOTE_ZABBIX_USER = "api_user"
 REMOTE_ZABBIX_PASSWORD = "sup3r:Secure!"
-FILE = "interfaces.csv"
-
+FILE = "example.csv"
