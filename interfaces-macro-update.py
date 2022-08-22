@@ -31,9 +31,9 @@ for k in devices.keys():
         for i in apis:
             ap_interfaces_list.append(i)
     aggregated_list = ap_interfaces_list + interfaces_list
-    regexp = '(^'
+    regexp = '^('
     regexp += '|'.join(aggregated_list)
-    regexp += '$)'
+    regexp += ')$'
     devices_dict.update({k: regexp})
 print(pformat(devices_dict))
 
@@ -44,6 +44,7 @@ zapi = ZabbixAPI(
 
 macro_name = '{$NET.IF.IFDESCR.MATCHES}'
 for host in devices_dict.keys():
+    hostid = None
     regexp = devices_dict[host]
     host_current_data = zapi.host.get(
             selectMacros='extend',
@@ -67,7 +68,7 @@ for host in devices_dict.keys():
                     print(pformat(e))
             elif m['macro'] == macro_name and m['value'] == regexp:
                 updated = True
-                print("Already up-to-date.")
+                print("Macro already up-to-date.")
         if updated == False:
             try:
                 result = zapi.usermacro.create(
@@ -78,6 +79,22 @@ for host in devices_dict.keys():
                 print("CREATED")
             except Exception as e:
                 print(pformat(e))
+        try:
+            # first unlink undesired template, if any
+            try:
+                result = zapi.template.massremove(
+                        templateids=UNLINK_TEMPLATE_IDS,
+                        hostids=[hostid])
+                print("Unlinking:", result)
+            except Exception as e:
+                print(e)
+            # procede to link desired template
+            result = zapi.template.massadd(
+                    templates=[{"templateid": LINK_TEMPLATE_ID}],
+                    hosts=[{"hostid": hostid}])
+            print("Linking:", result)
+        except Exception as e:
+            print(pformat(e))
     else:
         print('host', host, 'not found?')
 
